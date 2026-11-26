@@ -17,7 +17,8 @@
   "access": "browser",
   "data_info": {
     "mode": "snapshot",
-    "detail": "Statistics Canada vectors and Bank of Canada Valet observations supply six dated national indicators. Official release calendars are checked each weekday."
+    "detail": "Statistics Canada vectors and Bank of Canada Valet observations supply six dated national indicators. Official release calendars are checked each weekday.",
+    "cadence": "Weekdays"
   }
 }
 
