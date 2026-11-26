@@ -1,21 +1,5 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import { cleanLines } from '../web/model.mjs';
-test('trims, removes blanks and preserves first-seen order', () => {
-  assert.deepEqual(cleanLines('  Halifax\nLangley\nHalifax\n\nVancouver  '), {
-    text: 'Halifax\nLangley\nVancouver', count: 3, removed: 1,
-  });
-});
-test('supports Windows and old Mac line endings', () => {
-  assert.equal(cleanLines('a\r\nb\ra').text, 'a\nb');
-});
-test('empty text and whitespace produce an empty result', () => {
-  assert.deepEqual(cleanLines(' \n\t'), { text: '', count: 0, removed: 0 });
-});
-test('preserves case and Unicode', () => {
-  assert.equal(cleanLines('Québec\nquébec\n東京\nQuébec').text, 'Québec\nquébec\n東京');
-});
-test('treats markup as ordinary text', () => {
-  assert.equal(cleanLines('<script>alert(1)</script>\n<script>alert(1)</script>').text, '<script>alert(1)</script>');
-});
-test('rejects non-text input', () => { assert.throws(() => cleanLines(null), TypeError); });
+import test from'node:test';import assert from'node:assert/strict';import{latest,change,nextEvent,sparkSegments,csv,ical}from'../web/model.mjs';
+test('missing values stay missing and latest is an observation',()=>{const p=[{date:'2026-01',value:3},{date:'2026-02',value:null},{date:'2026-03',value:4}];assert.equal(latest(p).date,'2026-03');assert.equal(change(p).value,1);assert.equal(sparkSegments(p).length,2);});
+test('calendar never invents dates or selects past releases',()=>{assert.equal(nextEvent([{date:'2026-01-01',title:'CPI'}],'CPI','2026-02-01'),null);assert.equal(nextEvent([{date:'2026-03-01',title:'CPI'}],'Jobs','2026-02-01'),null);});
+test('seventh series is included and null exports blank',()=>{const s=Array.from({length:7},(_,i)=>({name:'Indicator '+i,unit:'%',source_url:'https://example.org',points:[{date:'2026-01',value:null}]}));assert.equal(csv(s).split('\r\n').length,8);assert.match(csv(s),/"2026-01",""/);});
+test('ICS encodes all-day dates and escapes text',()=>{const s=ical([{date:'2026-12-09',title:'Rate, announcement',reference:'A;B',url:'https://example.org'}]);assert.match(s,/DTSTART;VALUE=DATE:20261209/);assert.match(s,/Rate\\, announcement/);assert.doesNotMatch(s,/09:45/);});

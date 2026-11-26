@@ -1,37 +1,6 @@
-import { cleanLines } from './model.mjs';
-const input = document.querySelector('#input');
-const output = document.querySelector('#output');
-const status = document.querySelector('#status');
-const copy = document.querySelector('#copy');
-function update() {
-  const result = cleanLines(input.value);
-  output.value = result.text;
-  status.textContent = `${result.count} unique ${result.count === 1 ? 'line' : 'lines'}; ${result.removed} ${result.removed === 1 ? 'duplicate' : 'duplicates'} removed.`;
-  copy.disabled = result.count === 0;
-}
-input.addEventListener('input', update);
-document.querySelector('#sample').addEventListener('click', () => {
-  input.value = '  Halifax\nLangley\nHalifax\n\nVancouver  ';
-  update();
-});
-document.querySelector('#clear').addEventListener('click', () => {
-  input.value = '';
-  update();
-  input.focus();
-});
-if (navigator.clipboard && window.isSecureContext) {
-  copy.hidden = false;
-  copy.disabled = true;
-  copy.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(output.value);
-      status.textContent = 'Result copied.';
-    } catch {
-      output.focus();
-      output.select();
-      status.textContent = 'Copy was unavailable. The result is selected so you can copy it manually.';
-    }
-  });
-}
-// Namespace future preference storage as coolcode:<tool-id>:<key>.
-// Do not persist pasted text or uploads by default.
+import{latest,recent,nextEvent,change,sparkSegments,csv,ical}from'./model.mjs';const $=s=>document.querySelector(s),el=(t,v,c)=>{const n=document.createElement(t);if(v!==undefined)n.textContent=v;if(c)n.className=c;return n;};let data,range=12,pinnedOnly=false,pins=[];const key='coolcode:canadaboard:pins';try{const v=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(v))pins=v.filter(x=>typeof x==='string');}catch{}const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());const fmt=(v,s)=>v===null?'Unavailable':s.unit==='units/year'?Math.round(v).toLocaleString('en-CA'):v.toLocaleString('en-CA',{minimumFractionDigits:s.id==='cadusd'?4:1,maximumFractionDigits:s.id==='cadusd'?4:2});
+function link(t,u){const a=el('a',t);a.href=u;a.rel='noreferrer';return a;}
+function download(name,body,type){const u=URL.createObjectURL(new Blob([body],{type})),a=el('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),2000);}
+function render(){if(!data)return;const visible=data.series.filter(s=>!pinnedOnly||pins.includes(s.id));$('#status').textContent=visible.length?`${visible.length} indicators · last ${range} months of available observations`:'No pinned indicators yet. Turn off Pinned only and pin a card.';$('#pins').setAttribute('aria-pressed',pinnedOnly);$('#cards').replaceChildren(...visible.map(s=>{const card=el('article',undefined,'card');const top=el('div',undefined,'card-top');top.append(el('h2',s.name));const pin=el('button',pins.includes(s.id)?'Pinned ✓':'+ Pin');pin.setAttribute('aria-label',(pins.includes(s.id)?'Unpin ':'Pin ')+s.name);pin.setAttribute('aria-pressed',pins.includes(s.id));pin.onclick=()=>{pins=pins.includes(s.id)?pins.filter(x=>x!==s.id):[...pins,s.id];try{localStorage.setItem(key,JSON.stringify(pins));}catch{}render();};top.append(pin);const point=latest(s.points),delta=change(s.points);card.append(top,el('p',s.subtitle,'subtitle'));const number=el('div',fmt(point?.value??null,s),'number');number.append(el('small',s.unit==='%'?' %':s.unit==='units/year'?' units / year':' USD / CAD'));card.append(number,el('p','Observation: '+(point?.date||'Unavailable'),'period'),el('p',delta?`${delta.value>=0?'+':''}${fmt(delta.value,s)} ${s.unit==='%'?'percentage points':s.unit==='units/year'?'units/year':'USD/CAD'} from ${delta.from}`:'No prior comparable observation','delta'));const points=recent(s.points,range),svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 360 95');svg.setAttribute('class','spark');svg.setAttribute('role','img');svg.setAttribute('aria-label',`${s.name}, ${points[0]?.date} to ${points.at(-1)?.date}; exact values in table`);for(const seg of sparkSegments(points)){const line=document.createElementNS(svg.namespaceURI,'polyline');for(const[k,v]of Object.entries({points:seg,fill:'none',stroke:'#477754','stroke-width':'2.5'}))line.setAttribute(k,v);svg.append(line);}card.append(svg);const details=el('details'),summary=el('summary','Definition & observations');details.append(summary,el('p',s.explanation));if(point?.release_time)details.append(el('p','Latest observation source release: '+point.release_time+' (publisher time)'));const wrap=el('div',undefined,'table-wrap'),table=el('table'),head=el('tr');head.append(el('th','Period'),el('th',s.unit));table.append(head);for(const p of [...points].reverse()){const tr=el('tr');tr.append(el('td',p.date),el('td',fmt(p.value,s)));table.append(tr);}wrap.append(table);details.append(wrap);card.append(details);const links=el('div',undefined,'links');links.append(link('Official source ↗',s.source_url),link('Explore further ↗',s.related));card.append(links);const next=s.calendar_match?nextEvent(data.calendar.events,s.calendar_match,today):null;if(next)card.append(el('p','Next scheduled: '+next.date,'period'));return card;}));}
+for(const b of document.querySelectorAll('[data-range]'))b.onclick=()=>{range=Number(b.dataset.range);for(const n of document.querySelectorAll('[data-range]'))n.setAttribute('aria-pressed',n===b);render();};$('#pins').onclick=()=>{pinnedOnly=!pinnedOnly;render();};$('#export').onclick=()=>{if(data)download('canada-board-observations.csv',csv(data.series.filter(s=>!pinnedOnly||pins.includes(s.id))),'text/csv;charset=utf-8');};$('#ical').onclick=()=>{if(data)download('canada-official-releases.ics',ical(data.calendar.events.filter(e=>e.date>=today)),'text/calendar;charset=utf-8');};
+try{const r=await fetch('./data/snapshot.json');if(!r.ok)throw Error('Snapshot unavailable');data=await r.json();if(data.schema!=='coolcode.canadaboard.v1'||!data.series?.length)throw Error('Invalid snapshot');$('#checked').textContent='Sources checked '+data.checked_at.replace('T',' ').replace('+00:00',' UTC')+' · weekday refreshes';const age=(Date.now()-Date.parse(data.checked_at))/86400000;if(age>4)$('#checked').textContent+=' · Check is older than four days';const next=nextEvent(data.calendar.events,'',today);$('#next').textContent=next?next.title+' · '+next.date+' · '+(Math.round((Date.parse(next.date)-Date.parse(today))/86400000)===0?'today':'in '+Math.round((Date.parse(next.date)-Date.parse(today))/86400000)+' days'):'No future date in the captured calendar';const upcoming=data.calendar.events.filter(e=>e.date>=today);$('#events').replaceChildren(...upcoming.slice(0,12).map(e=>{const row=el('article',undefined,'event');row.append(el('strong',e.date));const body=el('div');body.append(el('strong',e.title),el('small',e.reference+' · '+e.provider));row.append(body,link('Publisher ↗',e.url));return row;}));$('#calendar-check').textContent='Calendar checked '+data.calendar.checked_at.slice(0,10)+' UTC. Schedules may change.';$('#ical').disabled=!upcoming.length;render();}catch(e){$('#status').textContent=e.message+'. Please retry later.';$('#next').textContent='Calendar unavailable';}

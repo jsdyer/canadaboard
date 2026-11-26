@@ -1,7 +1,8 @@
-// Keep transformations separate from the DOM so they can be tested directly.
-export function cleanLines(text) {
-  if (typeof text !== 'string') throw new TypeError('Expected text');
-  const lines = text.split(/\r\n|\r|\n/).map(line => line.trim()).filter(Boolean);
-  const unique = [...new Set(lines)];
-  return { text: unique.join('\n'), count: unique.length, removed: lines.length - unique.length };
-}
+export const numeric=points=>points.filter(p=>Number.isFinite(p.value));
+export function latest(points){return numeric(points).at(-1)||null;}
+export function recent(points,months){const end=latest(points);if(!end)return [];const d=new Date(end.date.length===7?end.date+'-01':end.date);d.setUTCMonth(d.getUTCMonth()-months);const floor=d.toISOString().slice(0,end.date.length);return points.filter(p=>p.date>=floor);}
+export function nextEvent(events,match,today){return events.filter(e=>e.date>=today&&(!match||e.title.startsWith(match))).sort((a,b)=>a.date.localeCompare(b.date))[0]||null;}
+export function change(points){const p=numeric(points);return p.length>1?{value:p.at(-1).value-p.at(-2).value,from:p.at(-2).date}:null;}
+export function sparkSegments(points,width=360,height=95){const vals=numeric(points);if(!vals.length)return [];const min=Math.min(...vals.map(p=>p.value)),max=Math.max(...vals.map(p=>p.value)),range=max-min||1;const stamp=p=>Date.parse(p.date.length===7?p.date+'-01':p.date);const first=stamp(points[0]),span=stamp(points.at(-1))-first||1;const result=[];let active=[];for(const p of points){if(p.value===null){if(active.length)result.push(active.join(' '));active=[];continue;}active.push(`${(5+(stamp(p)-first)/span*(width-10)).toFixed(2)},${(height-5-(p.value-min)/range*(height-10)).toFixed(2)}`);}if(active.length)result.push(active.join(' '));return result;}
+export function csv(series){const cell=v=>typeof v==='number'?String(v):'"'+String(v??'').replace(/^[=+@-]/,"'$&").replaceAll('"','""')+'"';return [['Indicator','Observation period','Value','Unit','Source release time','Source'],...series.flatMap(s=>s.points.map(p=>[s.name,p.date,p.value,s.unit,p.release_time,s.source_url]))].map(r=>r.map(cell).join(',')).join('\r\n');}
+export function ical(events){const esc=s=>String(s).replaceAll('\\','\\\\').replaceAll('\n','\\n').replaceAll(',','\\,').replaceAll(';','\\;');return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//CoolCode//Canada Board//EN','CALSCALE:GREGORIAN',...events.flatMap(e=>['BEGIN:VEVENT','UID:'+e.date+'-'+encodeURIComponent(e.title)+'@coolcode.ca','DTSTART;VALUE=DATE:'+e.date.replaceAll('-',''),'SUMMARY:'+esc(e.title),'DESCRIPTION:'+esc(e.reference+' · Official schedule may change'),'URL:'+e.url,'END:VEVENT']),'END:VCALENDAR'].join('\r\n')+'\r\n';}

@@ -1,16 +1,22 @@
 {
-  "id": "coolcode-tool-template",
-  "title": "CoolCode Tool Starter",
-  "description": "A browser-only example that trims lines and removes exact duplicates.",
-  "category": "security",
-  "tags": ["text", "lines", "duplicates"],
-  "icon": "scan-search",
-  "url": "/coolcode-tool-template/",
-  "source": "https://github.com/jsdyer/coolcode-tool-template",
+  "id": "canadaboard",
+  "title": "Canada Board",
+  "description": "Six Canadian economic indicators, with dated trends, source links and the next official releases.",
+  "category": "finance",
+  "tags": [
+    "Canada",
+    "economy",
+    "inflation",
+    "interest rates",
+    "housing"
+  ],
+  "icon": "chart-no-axes-combined",
+  "url": "/canadaboard/",
+  "source": "https://github.com/jsdyer/canadaboard",
   "hosting": "project",
   "access": "browser",
   "data_info": {
-    "mode": "local",
-    "detail": "The browser reads the text you paste and compares its lines."
+    "mode": "snapshot",
+    "detail": "Statistics Canada vectors and Bank of Canada Valet observations supply six dated national indicators. Official release calendars are checked each weekday."
   }
 }
