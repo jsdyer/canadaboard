@@ -2,7 +2,7 @@
   "id": "canadaboard",
   "title": "Canada Board",
   "description": "Six Canadian economic indicators, with dated trends, source links and the next official releases.",
-  "category": "finance",
+  "category": "money",
   "tags": [
     "Canada",
     "economy",
@@ -20,3 +20,4 @@
     "detail": "Statistics Canada vectors and Bank of Canada Valet observations supply six dated national indicators. Official release calendars are checked each weekday."
   }
 }
+
